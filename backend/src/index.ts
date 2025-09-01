@@ -1,30 +1,33 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
+import apiRoutes from './routes';
 
+// Load environment variables from .env file
 dotenv.config();
 
 const app = express();
 
+// Security middleware
+app.use(helmet());
+
+// CORS configuration
 const corsOptions = {
   origin: 'http://localhost:5173',
-  optionsSuccessStatus: 200
+  credentials: true, // Allow cookies and authorization headers
 };
 app.use(cors(corsOptions));
+
+// Middleware to parse JSON bodies
 app.use(express.json());
 
-app.get('/api/health', (req: Request, res: Response) => {
-  res.json({
-    ok: true,
-    service: 'api',
-    time: new Date().toISOString(),
-  });
-});
+// API routes
+app.use('/api', apiRoutes);
 
-const users = [{ id: 1, name: 'Alice' }];
-
-app.get('/api/v1/users', (req: Request, res: Response) => {
-  res.json(users);
+// Health check endpoint (can be kept outside of the main routes)
+app.get('/health', (req, res) => {
+  res.json({ ok: true, service: 'api', time: new Date().toISOString() });
 });
 
 const port = process.env.BACKEND_PORT || 8080;

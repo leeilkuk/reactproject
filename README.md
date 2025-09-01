@@ -17,7 +17,14 @@ This project is a full-stack application with a React frontend and a Node.js (Ex
 
 1.  **Clone the repository**
 
-2.  **Install root dependencies:**
+2.  **Set up Environment Variables:**
+    Create a `.env` file inside the `backend` directory and add the following:
+    ```
+    BACKEND_PORT=8080
+    JWT_SECRET=dev-secret
+    ```
+
+3.  **Install root dependencies:**
     From the root directory, install the `concurrently` package.
     ```sh
     npm install
