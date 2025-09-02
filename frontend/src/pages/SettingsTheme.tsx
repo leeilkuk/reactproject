@@ -78,8 +78,8 @@ const SettingsTheme = () => {
             >
               <option value="top">Top</option>
               <option value="left">Left</option>
-              <option value="right">Right (Not Implemented)</option>
-              <option value="bottom">Bottom (Not Implemented)</option>
+              <option value="right" disabled>Right (Not Implemented)</option>
+              <option value="bottom" disabled>Bottom (Not Implemented)</option>
             </select>
           </div>
 

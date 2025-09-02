@@ -78,7 +78,7 @@ const NavTop = () => {
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
             {renderMenuItems(menuItems)}
           </ul>
-          <button className="btn btn-secondary" onClick={logout}>
+          <button className="btn btn-secondary" onClick={() => { logout(); window.location.href = '/login'; }}>
             Logout
           </button>
         </div>

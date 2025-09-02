@@ -27,10 +27,14 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       // Handle unauthorized access, e.g., redirect to login
-      // Clear token from storage
-      localStorage.removeItem('access_token');
-      // Redirect to login page, preventing a loop if already on login
+      // Clear token from storage by calling the store's logout action
+      // This avoids direct manipulation of localStorage here
+      // useAuthStore.getState().logout(); // This can cause import cycles, better to handle in components
+
+      // A simple redirect is often sufficient
       if (window.location.pathname !== '/login') {
+        // To prevent a hard reload which loses state, you might use a navigation utility
+        // But for simplicity, a hard reload is clear.
         window.location.href = '/login';
       }
     }

@@ -37,3 +37,17 @@ body.app-bg {
 a {
   color: var(--app-accent);
 }
+
+.app-layout.placement-left {
+  display: flex;
+}
+
+#sidebar {
+  min-width: 250px;
+  max-width: 250px;
+  min-height: 100vh;
+}
+
+.app-layout.placement-left main {
+  flex-grow: 1;
+}

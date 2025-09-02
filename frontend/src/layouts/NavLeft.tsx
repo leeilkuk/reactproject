@@ -66,7 +66,7 @@ const NavLeft = () => {
   };
 
   return (
-    <nav id="sidebar" className="bg-light border-end">
+    <nav id="sidebar" className="bg-light border-end d-flex flex-column">
       <div className="sidebar-header p-3 mb-3 border-bottom">
         <h4>My App</h4>
       </div>
@@ -74,7 +74,7 @@ const NavLeft = () => {
         {renderMenuItems(menuItems)}
       </ul>
       <div className="mt-auto p-3">
-        <button className="btn btn-secondary w-100" onClick={logout}>
+        <button className="btn btn-secondary w-100" onClick={() => { logout(); window.location.href = '/login'; }}>
           Logout
         </button>
       </div>
