@@ -4,8 +4,8 @@ import apiClient from '../api/axios';
 import { useAuthStore } from '../stores/authStore';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('admin'); // Default for easy testing
+  const [password, setPassword] = useState('admin123'); // Default for easy testing
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);

@@ -1,93 +1,82 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import { z } from 'zod';
-import { findUser, signToken, authGuard } from './auth';
-import { menusSeed, userPrefsStore } from './data';
-import { JwtPayload } from './types';
+import { UserService } from './services/UserService';
+import { RoleService } from './services/RoleService';
+import { MenuService } from './services/MenuService';
+import { authGuard } from './auth'; // Assuming auth.ts exists and provides this
+import jwt from 'jsonwebtoken';
 
 const router = Router();
+const userService = new UserService();
+const roleService = new RoleService();
+const menuService = new MenuService();
 
-// Zod schema for user preferences validation
-const userPrefsSchema = z.object({
-  themeColor: z.string().optional(),
-  menuPlacement: z.enum(['top', 'left', 'right', 'bottom']).optional(),
-  bgImageUrl: z.string().url().or(z.literal('')).optional(),
-});
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 
-// POST /api/auth/login
-router.post('/auth/login', (req, res) => {
+// Auth routes
+router.post('/auth/login', async (req, res) => {
   const { username, password } = req.body;
+  const user = await userService.findByUsername(username);
 
-  if (!username || !password) {
-    return res.status(400).json({ ok: false, message: 'Username and password are required.' });
+  if (!user || !(await userService.validatePassword(password, user.passwordHash))) {
+    return res.status(401).json({ ok: false, message: 'Invalid credentials' });
   }
 
-  const user = findUser(username, password);
+  const payload = { id: user.id, username: user.username, roles: user.roles.map(r => r.name) };
+  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '2h' });
 
-  if (!user) {
-    return res.status(401).json({ ok: false, message: 'Invalid credentials.' });
-  }
-
-  const payload: JwtPayload = {
-    id: user.id,
-    username: user.username,
-    roles: user.roles,
-  };
-
-  const token = signToken(payload);
-
-  res.json({
-    ok: true,
-    token,
-    user: { id: user.id, name: user.name, roles: user.roles },
-  });
+  res.json({ ok: true, token, user: { id: user.id, name: user.employeeName, roles: user.roles.map(r => r.name) } });
 });
 
-// POST /api/auth/logout
-router.post('/auth/logout', (req, res) => {
-  // For JWT, logout is handled client-side by deleting the token.
-  // This endpoint is for semantics.
-  res.json({ ok: true });
+router.get('/auth/me', authGuard, async (req, res) => {
+    res.json({ ok: true, user: req.user });
 });
 
-// GET /api/me
-router.get('/me', authGuard, (req: Request, res: Response) => {
-  // The user payload is attached to the request by the authGuard
-  res.json({ ok: true, user: req.user });
+
+// User routes
+router.get('/users', authGuard, async (req, res) => {
+  const users = await userService.findAll();
+  res.json(users);
 });
 
-// GET /api/menus
-router.get('/menus', authGuard, (req: Request, res: Response) => {
-  // In a real app, you might filter menus based on user roles (req.user.roles)
-  res.json({ ok: true, menus: menusSeed });
+router.post('/users', authGuard, async (req, res) => {
+  const newUser = await userService.createUser(req.body);
+  res.json(newUser);
 });
 
-// GET /api/user-prefs
-router.get('/user-prefs', authGuard, (req: Request, res: Response) => {
-  const userId = req.user?.id;
-  if (!userId) {
-    return res.status(400).json({ ok: false, message: 'User ID not found in token.' });
-  }
-  const prefs = userPrefsStore.get(userId) || {};
-  res.json({ ok: true, preferences: prefs });
+router.post('/users/:id/roles', authGuard, async (req, res) => {
+    const user = await userService.assignRoles(parseInt(req.params.id), req.body.roles);
+    res.json(user);
 });
 
-// POST /api/user-prefs
-router.post('/user-prefs', authGuard, (req: Request, res: Response) => {
-  const userId = req.user?.id;
-  if (!userId) {
-    return res.status(400).json({ ok: false, message: 'User ID not found in token.' });
-  }
 
-  const result = userPrefsSchema.safeParse(req.body);
-  if (!result.success) {
-    return res.status(400).json({ ok: false, message: 'Invalid data.', errors: result.error.issues });
-  }
-
-  const currentPrefs = userPrefsStore.get(userId) || {};
-  const newPrefs = { ...currentPrefs, ...result.data };
-  userPrefsStore.set(userId, newPrefs);
-
-  res.json({ ok: true, preferences: newPrefs });
+// Role routes
+router.get('/roles', authGuard, async (req, res) => {
+  const roles = await roleService.findAll();
+  res.json(roles);
 });
+
+router.post('/roles', authGuard, async (req, res) => {
+  const newRole = await roleService.createRole(req.body);
+  res.json(newRole);
+});
+
+
+// Menu routes
+router.get('/menus', authGuard, async (req, res) => {
+  const menus = await menuService.findTrees();
+  res.json(menus);
+});
+
+router.post('/menus', authGuard, async (req, res) => {
+    const newMenu = await menuService.createMenu(req.body, req.body.parentId);
+    res.json(newMenu);
+});
+
+router.post('/menus/:id/roles', authGuard, async (req, res) => {
+    const menu = await menuService.assignRoles(parseInt(req.params.id), req.body.roles);
+    res.json(menu);
+});
+
 
 export default router;
